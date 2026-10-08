@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>ClauseCheck: Legal Document Analyzer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <!-- Sidebar Toggle with Font Awesome Balance Icon -->
+                <button id="sidebarToggle" class="icon-toggle-btn" title="Show sidebar">
+                    <i class="fa-solid fa-scale-balanced fa-2x"></i>
+                </button>
+                <!-- <div class="brand-logo"><i class="fa-solid fa-scale-balanced"
+                        style="color: #ffc107; margin-right: 6px;"></i> <strong>ClauseChecker</strong></div> -->
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-view="upload">Upload</button>
+                <button class="tab" data-view="processing">Processing</button>
+                <button class="tab" data-view="results">Analysis Results</button>
+            </div>
+            <div class="topbar-controls">
+                <button class="theme-toggle-btn" id="themeToggleBtn" type="button">☀️ Light Mode</button>
+                <label class="offline-toggle"><input type="checkbox" id="simOffline"> Simulate offline</label>
+            </div>
+        </header>
+
+        <aside id="appSidebar" class="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-brand">
+                    <button id="sidebarToggleInternal" class="icon-toggle-btn" title="Hide sidebar">
+                        <i class="fa-solid fa-scale-balanced fa-2x"></i>
+                    </button>
+                    <span class="sidebar-brand-name">ClauseChecker</span>
+                </div>
+
+                <button id="newAnalysisBtn" class="new-analysis-btn">
+                    <span>+ New Analysis</span>
+                </button>
+
+                <div class="sidebar-section-title">DOCUMENT HISTORY</div>
+                <div id="documentHistoryList" class="history-list">
+                    <!-- Dynamic history items injected via JS -->
+                </div>
+            </div>
+
+            <!-- Claude-style User Profile Footer -->
+            <div class="sidebar-footer">
+                <div class="user-profile-name" id="userProfileName">User</div>
+            </div>
+        </aside>
+
+        <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+        <!-- UPLOAD VIEW -->
+        <main class="view active" id="upload">
+            <div class="hero">
+                <div class="icon"><i class="fa-solid fa-file-contract fa-2x"></i></div>
+                <h1>Upload a document to check for risky clauses</h1>
+                <p>AI + rule-based engine flags risky and ambiguous terms in your contract.</p>
+            </div>
+
+            <!-- Gemini API key is configured in app.js, not exposed on this page.
+                 See the CONFIG section near the top of app.js. -->
+
+            <div class="dropzone" id="dropzoneArea">
+                <div style="font-size: 32px; margin-bottom: 10px; color: var(--primary-color);"><i
+                        class="fa-solid fa-cloud-arrow-up"></i></div>
+                <p><strong>Drag & drop your document here</strong></p>
+                <p id="dropzoneFileName" style="font-size: 13px; color: #64748b; margin-top: 4px;">.pdf, .docx, .txt
+                    or click to browse</p>
+                <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;">
+                <button id="uploadBtn" type="button">Upload Document</button>
+            </div>
+
+            <div id="uploadError" class="upload-error"></div>
+
+            <div class="dashboard-cards">
+                <div class="card" id="howItWorksCard" style="cursor: pointer;">
+                    <div class="card-icon" style="color: white;"><i class="fa-solid fa-circle-info"></i></div>
+                    <h3>How it works</h3>
+                    <p>Gemini + regex rules scan your text for risky and ambiguous clauses.</p>
+                </div>
+                <div class="card" id="sampleFlagsCard" style="cursor: pointer;">
+                    <div class="card-icon" style="color: var(--red-color); "><i class="fa-solid fa-flag fa-sm"></i>
+                    </div>
+                    <h3>See Sample Flags</h3>
+                    <p>Preview example flagged clauses before uploading your own.</p>
+                </div>
+            </div>
+
+            <!-- INFO MODAL (opened by the two cards above) -->
+            <div class="modal-overlay" id="infoModal">
+                <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                    <div class="modal-tabs">
+                        <button type="button" class="modal-tab" data-modal-view="how" id="modalTabHow">How It
+                            Works</button>
+                        <button type="button" class="modal-tab" data-modal-view="samples" id="modalTabSamples">Sample
+                            Flags</button>
+                        <button type="button" class="modal-close" id="modalCloseBtn" aria-label="Close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- HOW IT WORKS -->
+                        <div class="modal-view active" id="modalViewHow">
+                            <h2 id="modalTitle">How ClauseCheck works</h2>
+                            <p class="modal-subtitle">A combination of fast rule based pattern matching and AI review.
+                            </p>
+
+                            <div class="proc-step">
+                                <div class="proc-icon">1</div>
+                                <div>
+                                    <strong>Upload your document</strong>
+                                    <p style="font-size: 12px; color: #64748b;">Drop in a .pdf, .docx, or .txt
+                                        contract. Everything below runs automatically.</p>
+                                </div>
+                            </div>
+
+                            <div class="proc-step">
+                                <div class="proc-icon">2</div>
+                                <div>
+                                    <strong>Text extraction</strong>
+                                    <p style="font-size: 12px; color: #64748b;">The document is uploaded and
+                                        converted to plain text so the analyzer has something to read.</p>
+                                </div>
+                            </div>
+
+                            <div class="proc-step">
+                                <div class="proc-icon">3</div>
+                                <div>
+                                    <strong>Rule-based scan</strong>
+                                    <p style="font-size: 12px; color: #64748b; margin-bottom: 6px;">A set of regex
+                                        patterns is used to identify common risky phrases, such as one-sided termination
+                                        clauses, broad indemnity terms, unclear notice periods, and other potentially
+                                        problematic wording.
+                                    </p>
+                                    <span class="badge rule">Rule-based</span>
+                                </div>
+                            </div>
+
+                            <div class="proc-step">
+                                <div class="proc-icon">4</div>
+                                <div>
+                                    <strong>Gemini contextual analysis</strong>
+                                    <p style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Gemini reads the
+                                        full document and flags ambiguous or risky clauses the regex patterns would
+                                        miss.</p>
+                                    <span class="badge ai">AI-based</span>
+                                </div>
+                            </div>
+
+                            <div class="proc-step">
+                                <div class="proc-icon">5</div>
+                                <div>
+                                    <strong>Results</strong>
+                                    <p style="font-size: 12px; color: #64748b;">Flagged terms are highlighted
+                                        directly in your document, listed with severity and plain-language
+                                        explanations, summarized in a risk chart, and exportable as a report.</p>
+                                </div>
+                            </div>
+
+                            <div class="hybrid-note">
+                                <strong>Why hybrid?</strong> Regex is fast and consistent but only catches what it's
+                                explicitly told to look for. Gemini understands context but is slower and less
+                                predictable. Combining both gives broader coverage than either alone.
+                            </div>
+                        </div>
+
+                        <!-- SAMPLE FLAGS -->
+                        <div class="modal-view" id="modalViewSamples">
+                            <h2>See sample flags</h2>
+                            <p class="modal-subtitle">A preview of what ClauseCheck catches (before you upload
+                                anything of your own.)</p>
+                            <p style="font-size: 12.5px; color: #64748b; margin-bottom: 18px;">Pulled from a sample
+                                service agreement, so you can see the kind of output to expect.</p>
+
+                            <div class="flag-item" style="cursor: default;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                    <span class="badge rule">Rule</span>
+                                    <span style="font-size:11px;color:#64748b;">High severity</span>
+                                </div>
+                                <div style="font-size:12.5px;font-style:italic;color:#64748b;margin-bottom:6px;">
+                                    "...without notice and without cause..."</div>
+                                <div style="font-size:13px;">One-sided termination clause: leaves the other party
+                                    with no protection or exit terms.</div>
+                                <div class="tag">Termination</div>
+                            </div>
+
+                            <div class="flag-item" style="cursor: default;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                    <span class="badge ai">AI</span>
+                                    <span style="font-size:11px;color:#64748b;">Medium severity</span>
+                                </div>
+                                <div style="font-size:12.5px;font-style:italic;color:#64748b;margin-bottom:6px;">
+                                    "...a reasonable period..."</div>
+                                <div style="font-size:13px;">Ambiguous timeframe: no defined number of days, open to
+                                    dispute.</div>
+                                <div class="tag">Payment</div>
+                            </div>
+
+                            <div class="flag-item" style="cursor: default;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                    <span class="badge rule">Rule</span>
+                                    <span style="font-size:11px;color:#64748b;">High severity</span>
+                                </div>
+                                <div style="font-size:12.5px;font-style:italic;color:#64748b;margin-bottom:6px;">
+                                    "...chosen solely by the Company..."</div>
+                                <div style="font-size:13px;">One-sided choice of where the dispute will be settled:
+                                    favors one
+                                    party's convenience and leverage.</div>
+                                <div class="tag">Dispute Resolution</div>
+                            </div>
+
+                            <div style="margin-top: 20px; text-align: center;">
+                                <button type="button" class="proc-btn ready" id="tryItYourselfBtn">Try it with your
+                                    own document</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- PROCESSING VIEW -->
+        <main class="view" id="processing">
+            <div class="proc-wrap">
+                <h1 style="font-size: 24px; margin-bottom: 8px;">Analyzing your document</h1>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Running AI detection
+                    pipeline...</p>
+
+                <div class="proc-step" id="step-extract">
+                    <div class="proc-icon">1</div>
+                    <div>
+                        <strong>Extracting text</strong>
+                        <p style="font-size: 12px; color: #64748b;" id="extractStatusText">Reading document contents...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="proc-step" id="step-rule">
+                    <div class="proc-icon">2</div>
+                    <div>
+                        <strong>Rule-based scan</strong>
+                        <p style="font-size: 12px; color: #64748b;">Matching known risky patterns with regex rules...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="proc-step" id="step-gemini">
+                    <div class="proc-icon">3</div>
+                    <div>
+                        <strong>Gemini contextual analysis</strong>
+                        <p style="font-size: 12px; color: #64748b;" id="geminiStatusText">Reviewing ambiguous or
+                            context-dependent language...</p>
+                    </div>
+                </div>
+
+                <button class="proc-btn" id="viewResultsBtn" type="button">View Results</button>
+            </div>
+        </main>
+
+        <!-- RESULTS VIEW -->
+        <main class="view" id="results">
+            <div class="score-panel" id="scorePanel">
+                <div class="donut-wrap">
+                    <svg viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border-color)" stroke-width="14" />
+                        <circle id="donutHigh" cx="60" cy="60" r="50" fill="none" stroke="var(--red-color)"
+                            stroke-width="14" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 60 60)" />
+                        <circle id="donutMed" cx="60" cy="60" r="50" fill="none" stroke="var(--secondary-color)"
+                            stroke-width="14" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 60 60)" />
+                        <circle id="donutLow" cx="60" cy="60" r="50" fill="none" stroke="var(--green-color)"
+                            stroke-width="14" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 60 60)" />
+                    </svg>
+                    <div class="donut-center">
+                        <div class="pct" id="donutPct">0%</div>
+                        <div class="lbl">high risk</div>
+                    </div>
+                </div>
+                <div class="score-breakdown" id="scoreBreakdown"></div>
+            </div>
+
+            <div class="results-grid">
+                <div class="doc-panel">
+                    <h2 style="font-size: 16px; margin-bottom: 15px;">Document Preview</h2>
+                    <div class="doc-text" id="docText"></div>
+                </div>
+
+                <div class="flags-panel">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 style="font-size: 16px;">Flagged Clauses (<span id="flagCount">0</span>)</h2>
+                        <button class="download-btn" id="downloadBtn" type="button">Download Report</button>
+                    </div>
+                    <div class="banner-offline" id="offlineBanner">⚠ Offline analysis: Gemini contextual review
+                        skipped. Showing rule-based flags only.</div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <select id="filterSeverity">
+                            <option value="all">All severities</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select id="filterSource">
+                            <option value="all">AI + Rule</option>
+                            <option value="AI">AI only</option>
+                            <option value="Rule">Rule only</option>
+                        </select>
+                        <select id="filterType">
+                            <option value="all">All clause types</option>
+                        </select>
+                    </div>
+                    <div id="flagsList"></div>
+                </div>
+                <div
+                    style="font-size: 13px; color: #64748b; margin-top: 180px; text-align: center; width: 100%; display: block;">
+                    ClauseCheck may miss issues. Always verify with a qualified lawyer.
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

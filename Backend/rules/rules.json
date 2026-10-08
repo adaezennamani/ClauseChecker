@@ -1,0 +1,45 @@
+{
+  "ruleset_version": "1.0",
+  "engine_type": "offline_regex",
+  "rules": [
+    {
+      "rule_id": "LIAB_01",
+      "clause_type": "Limitation of Liability",
+      "risk_level": "High",
+      "severity_color": "red",
+      "match_criteria": {
+        "pre_filter_keywords": ["liability", "exceed", "maximum", "cap"],
+        "pattern": "(?:maximum|aggregate)\\s+liability\\s+(?:shall|will)\\s+not\\s+exceed",
+        "flags": "i"
+      },
+      "extraction_label": "Liability Cap",
+      "user_recommendation": "A party is capping their financial responsibility. Ensure the cap amount adequately covers potential damages in worst-case scenarios."
+    },
+    {
+      "rule_id": "TERM_01",
+      "clause_type": "Termination",
+      "risk_level": "Medium",
+      "severity_color": "amber",
+      "match_criteria": {
+        "pre_filter_keywords": ["terminate", "convenience", "without cause", "any time"],
+        "pattern": "(?:terminate|cancel)\\s+(?:this\\s+agreement\\s+)?(?:at\\s+any\\s+time\\s+)?(?:without\\s+cause|for\\s+convenience)",
+        "flags": "i"
+      },
+      "extraction_label": "Unilateral Termination",
+      "user_recommendation": "This contract can be cancelled without a specific reason. Verify notice periods to prevent sudden disruption of services."
+    },
+    {
+      "rule_id": "RENEW_01",
+      "clause_type": "Term and Renewal",
+      "risk_level": "Medium",
+      "severity_color": "amber",
+      "match_criteria": {
+        "pre_filter_keywords": ["automatic", "renew", "successive"],
+        "pattern": "(?:automatically|tacitly)\\s+renew(?:s|ed)?\\s+(?:for\\s+successive|unless\\s+terminated)",
+        "flags": "i"
+      },
+      "extraction_label": "Auto-Renewal (Evergreen)",
+      "user_recommendation": "This is an 'evergreen' clause. The contract will automatically renew unless you explicitly opt out. Set a calendar reminder for the opt-out window."
+    }
+  ]
+}
